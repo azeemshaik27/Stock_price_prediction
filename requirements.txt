@@ -1,0 +1,9 @@
+yfinance
+pandas
+numpy
+matplotlib
+pmdarima
+scikit-learn
+statsmodels
+flask
+joblib
