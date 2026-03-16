@@ -11,5 +11,9 @@
       "src": "/(.*)",
       "dest": "stock-prediction/app.py"
     }
-  ]
+  ],
+  "env": {
+    "FLASK_DEBUG": "false",
+    "TRAIN_ON_DEMAND": "false"
+  }
 }

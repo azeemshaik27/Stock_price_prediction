@@ -61,7 +61,7 @@ def prepare_data(series, seq_len=60, train_split=0.8):
     
     return torch.FloatTensor(scaled[:split]), torch.FloatTensor(scaled[split:]), scaler
 
-def train_model(model, train_loader, epochs=50, lr=0.001):
+def train_model(model, train_loader, epochs=10, lr=0.001):
     optimizer = torch.optim.Adam(model.parameters(), lr=lr)
     criterion = nn.MSELoss()
     

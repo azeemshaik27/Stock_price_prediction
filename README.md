@@ -9,15 +9,13 @@ python stock-prediction/app.py
 ```
 Visit http://localhost:5000
 
-## Vercel Deployment
-1. Push to GitHub
-2. Connect repo to Vercel
-3. Deploy (auto-detects Python/Flask)
+## Vercel Deployment (Python 3.10.12)
+Uses `runtime.txt`. 
 
-**Env vars:**
-- `FLASK_DEBUG`: false
-- `TRAIN_ON_DEMAND`: false (skip train by default)
+1. `git init && git add . && git commit -m "Deploy ready" && git push` GitHub.
+2. vercel.com → New Project → Import.
+3. Set env: FLASK_DEBUG=false, TRAIN_ON_DEMAND=false.
 
-**Pre-trained models:** Commit `data/stock_data.csv`, `model/*` for instant start.
+Live: Serverless, fast predictions w/ pre-trained AAPL models.
 
 Live demo: Models skip training if exist – fast predictions.

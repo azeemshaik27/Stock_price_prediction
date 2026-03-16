@@ -19,7 +19,7 @@ import predict_lstm
 
 warnings.filterwarnings("ignore")
 
-app = Flask(__name__)
+app = Flask(__name__, static_folder='static')
 
 # ── Chart Builder ─────────────────────────────────────────────────────────────
 def build_chart(ticker: str, df_forecast: pd.DataFrame) -> str:
@@ -128,7 +128,7 @@ def run_pipeline():
     end = data.get("end", "2024-12-31")
     days = int(data.get("days", 30))
     model_type = data.get("model", "arima")
-    force_train = data.get("force_train", os.environ.get("TRAIN_ON_DEMAND") == "true")
+    force_train = data.get("force_train", os.environ.get("TRAIN_ON_DEMAND") == "true") and model_type == 'arima'  # Skip LSTM train for speed
 
     app_dir = app.root_path
     data_dir = os.path.join(app_dir, "data")

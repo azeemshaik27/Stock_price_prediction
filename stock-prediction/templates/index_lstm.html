@@ -5,22 +5,154 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>LSTM · Stock Price Prediction</title>
   <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700&family=JetBrains+Mono:wght@300;400;500&display=swap" rel="stylesheet"/>
-  <style>/* Same styles as ARIMA */</style>
+  <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+  <style>
+    /* Paste all CSS from index.html here - same styles */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+      --bg:         #0a0f14;
+      --surface:    #151820;
+      --surface2:   #1c2030;
+      --border:     #2a2e3e;
+      --border2:    #353a4e;
+      --fg:         #e8eaf0;
+      --fg2:        #c4c8dc;
+      --muted:      #8b90b0;
+      --accent:     #8b5cf6;
+      --accent-dim: #5b21b6;
+      --green:      #16a34a;
+      --amber:      #f5a623;
+      --red:        #f25c5c;
+      --mono:       'JetBrains Mono', monospace;
+      --sans:       'Syne', sans-serif;
+    }
+    /* ... (copy full CSS from index.html to make identical UI) ... */
+    .badge { background: var(--accent-dim); border-color: var(--accent); color: var(--accent); }
+  </style>
 </head>
 <body>
 <div class="container">
   <header>
     <div class="badge">LSTM</div>
     <h1>Stock Price <em>Prediction</em></h1>
+    <p class="subtitle">Neural network forecast using LSTM. Interactive Plotly chart.</p>
   </header>
+
   <div class="input-card">
     <div class="input-card-title">LSTM Configuration</div>
-    <!-- Form -->
+    <div class="form-grid">
+      <div class="form-group">
+        <label>Stock Ticker</label>
+        <input type="text" id="ticker" value="AAPL" placeholder="e.g. AAPL" />
+      </div>
+      <div class="form-group">
+        <label>Start Date</label>
+        <input type="date" id="start" value="2021-01-01" />
+      </div>
+      <div class="form-group">
+        <label>End Date</label>
+        <input type="date" id="end" value="2024-12-31" />
+      </div>
+      <div class="form-group">
+        <label>Forecast Days</label>
+        <input type="number" id="days" value="30" min="7" max="180" />
+      </div>
+    </div>
+    <div class="btn-row">
+      <button class="btn" id="run-btn" onclick="runLSTM()">▶ Run LSTM Prediction</button>
+      <span class="status" id="status-msg"></span>
+    </div>
   </div>
-  <!-- Results -->
+
+  <div id="results-section" style="display:none;">
+    <div class="metrics-grid" id="metrics-grid"></div>
+    <div class="chart-card">
+      <div class="card-header">
+        <span class="card-title">LSTM Price Forecast</span>
+        <span class="card-sub" id="chart-label">—</span>
+      </div>
+      <div id="lstm-chart"></div>
+    </div>
+    <div class="table-card">
+      <div class="table-card-header">
+        <span class="card-title">Forecast Table</span>
+        <span class="card-sub" id="table-label">—</span>
+      </div>
+      <div class="table-scroll">
+        <table>
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Date</th>
+              <th>Forecast (₹)</th>
+              <th>Lower CI</th>
+              <th>Upper CI</th>
+            </tr>
+          </thead>
+          <tbody id="forecast-body"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
 </div>
+
 <script>
-// JS
+let currentTicker = 'AAPL';
+async function runLSTM() {
+  const btn = document.getElementById("run-btn");
+  const status = document.getElementById("status-msg");
+  
+  const ticker = document.getElementById("ticker").value.trim().toUpperCase();
+  const start = document.getElementById("start").value;
+  const end = document.getElementById("end").value;
+  const days = parseInt(document.getElementById("days").value);
+  
+  btn.disabled = true;
+  status.className = 'status running';
+  status.textContent = `Running LSTM for ${ticker}...`;
+  document.getElementById('results-section').style.display = 'none';
+  
+  try {
+    const res = await fetch('/run', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({ticker, start, end, days, model: 'lstm'})
+    });
+    const data = await res.json();
+    
+    if (!data.table) throw new Error('No forecast data');
+    
+    // Chart
+    const df = data.table.map(r => ({x: r.date, y: r.forecast, low: r.lower_95, high: r.upper_95}));
+    Plotly.newPlot('lstm-chart', [{
+      x: df.map(d => d.x),
+      y: df.map(d => d.y),
+      mode: 'lines+markers',
+      line: {color: '#8b5cf6', width: 3},
+      name: 'LSTM Forecast'
+    }], {
+      title: `${ticker} LSTM Forecast (${days} days)`,
+      xaxis: {title: 'Date'},
+      yaxis: {title: 'Price (₹)'},
+      plot_bgcolor: '#0a0f14',
+      paper_bgcolor: '#0a0f14',
+      font: {color: '#e8eaf0'}
+    });
+    
+    // Metrics & Table (same as ARIMA)
+    // ... (copy from index.html JS)
+    
+    status.className = 'status done';
+    status.textContent = `LSTM complete for ${ticker}`;
+    document.getElementById('results-section').style.display = 'block';
+    
+  } catch (err) {
+    status.className = 'status error';
+    status.textContent = 'Error: ' + err.message;
+  }
+  btn.disabled = false;
+}
 </script>
 </body>
 </html>
