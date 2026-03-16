@@ -8,4 +8,3 @@ statsmodels
 flask
 joblib
 gunicorn
-# torch torchvision removed for Vercel (heavy deps, version conflict) - ARIMA full featured, LSTM local
