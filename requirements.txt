@@ -8,5 +8,5 @@ statsmodels
 flask
 joblib
 gunicorn
-torch
-torchvision
+# torch  # CPU-only for Vercel, or use ARIMA only
+# torchvision
