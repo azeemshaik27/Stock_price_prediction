@@ -15,6 +15,8 @@ import predict as predictor
 import train_lstm
 import predict_lstm
 
+
+
 warnings.filterwarnings("ignore")
 
 app = Flask(__name__)
@@ -120,45 +122,48 @@ def lstm():
 
 @app.route("/run", methods=["POST"])
 def run_pipeline():
-    data       = request.get_json()
-    ticker     = data.get("ticker", "AAPL").upper().strip()
-    start      = data.get("start",  "2021-01-01")
-    end        = data.get("end",    "2024-12-31")
-    days       = int(data.get("days", 30))
+    data = request.get_json()
+    ticker = data.get("ticker", "AAPL").upper().strip()
+    start = data.get("start", "2021-01-01")
+    end = data.get("end", "2024-12-31")
+    days = int(data.get("days", 30))
     model_type = data.get("model", "arima")
+    force_train = data.get("force_train", os.environ.get("TRAIN_ON_DEMAND") == "true")
 
-    forecasts = {}
-    metrics_list = []
-    
-    model_type = data.get("model", "arima")
-    
-    forecasts = {}
-    metrics_list = []
-    
+    app_dir = app.root_path
+    data_dir = os.path.join(app_dir, "data")
+    model_dir = os.path.join(app_dir, "model")
+    results_dir = os.path.join(app_dir, "results")
+    os.makedirs(data_dir, exist_ok=True)
+    os.makedirs(model_dir, exist_ok=True)
+    os.makedirs(results_dir, exist_ok=True)
+
+    table = None
+    metrics = {}
+
     if model_type == "arima":
-        trainer.main(ticker, start, end)
+        arima_model_path = os.path.join(model_dir, "arima_model.pkl")
+        if force_train or not os.path.exists(arima_model_path):
+            trainer.main(ticker, start, end)
         df_forecast, metrics = predictor.run(days=days)
-        forecasts["arima"] = df_forecast.to_dict('records')
-        metrics_list.append(metrics)
         table = df_forecast.to_dict('records')
     elif model_type == "lstm":
-        train_lstm.main(ticker, start, end)
+        lstm_model_path = os.path.join(model_dir, "lstm_model.pt")
+        if force_train or not os.path.exists(lstm_model_path):
+            train_lstm.main(ticker, start, end)
         df_forecast, metrics = predict_lstm.run(days=days)
-        forecasts["lstm"] = df_forecast.to_dict('records')
-        metrics_list.append(metrics)
         table = df_forecast.to_dict('records')
-    
+
     chart_b64 = ""
-    if forecasts:
-        first_key = list(forecasts.keys())[0]
-        df_f = pd.DataFrame(forecasts[first_key])
+    if table:
+        df_f = pd.DataFrame(table)
         chart_b64 = build_chart(ticker, df_f)
-    
+
     return jsonify({
         "status": "ok",
         "chart": chart_b64,
         "table": table,
-        "metrics": metrics_list[0] if metrics_list else {},
+        "metrics": metrics,
         "ticker": ticker,
         "days": days
     })

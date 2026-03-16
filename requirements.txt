@@ -7,3 +7,6 @@ scikit-learn
 statsmodels
 flask
 joblib
+gunicorn==22.0.0
+torch==2.4.1
+torchvision==0.19.1
