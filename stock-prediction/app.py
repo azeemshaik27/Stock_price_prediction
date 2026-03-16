@@ -12,8 +12,8 @@ from flask import Flask, render_template, request, jsonify
 
 import train as trainer
 import predict as predictor
-import train_lstm
-import predict_lstm
+# import train_lstm
+# import predict_lstm  # Disabled for Vercel (torch deps)"
 
 
 
@@ -148,11 +148,7 @@ def run_pipeline():
         df_forecast, metrics = predictor.run(days=days)
         table = df_forecast.to_dict('records')
     elif model_type == "lstm":
-        lstm_model_path = os.path.join(model_dir, "lstm_model.pt")
-        if force_train or not os.path.exists(lstm_model_path):
-            train_lstm.main(ticker, start, end)
-        df_forecast, metrics = predict_lstm.run(days=days)
-        table = df_forecast.to_dict('records')
+        return jsonify({"status": "error", "message": "LSTM disabled on serverless (torch heavy). Use ARIMA or local."})
 
     chart_b64 = ""
     if table:
