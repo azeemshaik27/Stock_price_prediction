@@ -1,7 +1,19 @@
 import io
 import os
 import sys
+import shutil
 sys.path.append(os.path.dirname(__file__))
+
+# If running on Vercel (read-only filesystem), copy data/model to /tmp and switch CWD there
+if os.environ.get("VERCEL") == "1":
+    for folder in ["data", "model", "results"]:
+        for base_path in ["/var/task", "/var/task/stock-prediction"]:
+            src = os.path.join(base_path, folder)
+            dst = os.path.join("/tmp", folder)
+            if os.path.exists(src):
+                shutil.copytree(src, dst, dirs_exist_ok=True)
+    os.chdir("/tmp")
+
 import base64
 import warnings
 import numpy as np
@@ -132,7 +144,7 @@ def run_pipeline():
     model_type = data.get("model", "arima")
     force_train = data.get("force_train", os.environ.get("TRAIN_ON_DEMAND") == "true") and model_type == 'arima'  # Skip LSTM train for speed
 
-    app_dir = app.root_path
+    app_dir = "/tmp" if os.environ.get("VERCEL") == "1" else app.root_path
     data_dir = os.path.join(app_dir, "data")
     model_dir = os.path.join(app_dir, "model")
     results_dir = os.path.join(app_dir, "results")
