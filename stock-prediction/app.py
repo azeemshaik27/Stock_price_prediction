@@ -1,5 +1,7 @@
 import io
 import os
+import sys
+sys.path.append(os.path.dirname(__file__))
 import base64
 import warnings
 import numpy as np
